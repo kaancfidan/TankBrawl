@@ -18,6 +18,8 @@ public class TankMovement : MonoBehaviour
     private float m_TurnInputValue;
     private float m_OriginalPitch;
 
+    private Transform m_Turret;
+
 
     private void Awake()
     {
@@ -45,6 +47,8 @@ public class TankMovement : MonoBehaviour
         m_TurnAxisName = "Horizontal" + m_PlayerNumber;
 
         m_OriginalPitch = m_MovementAudio.pitch;
+
+        m_Turret = transform.FindChild("TankRenderers").FindChild("TankTurret");
     }
 
 
@@ -93,8 +97,22 @@ public class TankMovement : MonoBehaviour
         // Move and turn the tank.
         Move();
         Turn();
+        TurnTurret();
     }
 
+    private void TurnTurret()
+    {
+        var hit = new RaycastHit();
+        Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+
+        if (hit.point != null && hit.transform.name != name)
+        {
+            var lookAtVector = hit.point - transform.position;
+
+            var q = Quaternion.LookRotation(lookAtVector, Vector3.up);
+            m_Turret.rotation = q;
+        }
+    }
 
     private void Move()
     {
