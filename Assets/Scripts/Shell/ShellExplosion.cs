@@ -7,7 +7,6 @@ public class ShellExplosion : MonoBehaviour
     public AudioSource m_ExplosionAudio;                // Reference to the audio that will play on explosion.
     public float m_MaxDamage = 100f;                    // The amount of damage done if the explosion is centred on a tank.
     public float m_ExplosionForce = 1000f;              // The amount of force added to a tank at the centre of the explosion.
-    public float m_MaxLifeTime = 2f;                    // The time in seconds before the shell is removed.
     public float m_ExplosionRadius = 5f;                // The maximum distance away from the explosion tanks can be and are still affected.
 
     private Rigidbody m_RigidBody;
@@ -18,16 +17,9 @@ public class ShellExplosion : MonoBehaviour
         m_RigidBody = GetComponent<Rigidbody>();
     }
 
-    private void Start()
-    {
-        // If it isn't destroyed by then, destroy the shell after it's lifetime.
-        Destroy(gameObject, m_MaxLifeTime);
-    }
-
-
     private void FixedUpdate()
     {
-        m_RigidBody.AddForce(Physics.gravity * m_RigidBody.mass * -0.5f);
+        m_RigidBody.AddForce(Physics.gravity * m_RigidBody.mass * -0.7f);
     }
 
     private void OnTriggerEnter(Collider other)

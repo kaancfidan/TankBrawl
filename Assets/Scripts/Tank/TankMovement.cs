@@ -1,19 +1,16 @@
 ﻿using UnityEngine;
 
-public class MoveCommand : Command
+public class MoveCommand : GroundTargetedCommand
 {
-    public MoveCommand(Vector3 target, NavMeshAgent agent, Rigidbody rigidBody)
-    : base(target)
+    public MoveCommand(Vector3 target, TankController controller, NavMeshAgent agent)
+    : base(target, controller)
     {
-        m_RigidBody = rigidBody;
         m_Agent = agent;
     }
 
     public override void Execute()
     {
-        m_RigidBody.isKinematic = true;
-        m_Agent.enabled = true;
-
+        m_Controller.MakeKinematic();
         m_Agent.destination = m_Target;
 
         base.Execute();
@@ -26,7 +23,6 @@ public class MoveCommand : Command
     }
 
     private NavMeshAgent m_Agent;
-    private Rigidbody m_RigidBody;
 }
 
 public class TankMovement : MonoBehaviour
@@ -94,7 +90,7 @@ public class TankMovement : MonoBehaviour
 
     private void TurnTurret()
     {
-        if(m_Controller.Status == TankMoveStatus.Normal)
+        if(m_Controller.Status == TankStatus.Normal)
         {
             var hit = new RaycastHit();
             Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
@@ -111,29 +107,28 @@ public class TankMovement : MonoBehaviour
 
     private void Move()
     {
-        if (m_Controller.Status == TankMoveStatus.Normal)
+        if (m_Controller.Status == TankStatus.Normal)
         {
             if (Input.GetMouseButtonDown(1))
             {
                 var hit = new RaycastHit();
                 Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
 
-                if (hit.point != null)
-                {
-                    m_Controller.Command(new MoveCommand(hit.point, m_Agent, m_RigidBody));
-                }
+                m_Controller.Command(new MoveCommand(hit.point, m_Controller, m_Agent));
             }
         }
-        else if(m_Controller.Status == TankMoveStatus.Turned)
+        else if(m_Controller.Status == TankStatus.Turned)
         {
+            var turnAxis = (System.Math.Abs(Vector3.Dot(transform.forward, Vector3.up)) < 0.2) ? transform.forward : transform.right;
+
             if(Input.GetMouseButton(1))
             {
-                m_RigidBody.AddTorque(transform.forward * 10/* * Vector3.Dot()*/);
+                m_RigidBody.AddTorque(turnAxis * 10);
             }
 
             if (Input.GetMouseButton(0))
             {
-                m_RigidBody.AddTorque(transform.forward * -10);
+                m_RigidBody.AddTorque(turnAxis * -10);
             }
         }
     }

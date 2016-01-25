@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class TankHealth : MonoBehaviour
@@ -15,20 +16,27 @@ public class TankHealth : MonoBehaviour
     private ParticleSystem m_ExplosionParticles;        // The particle system the will play when the tank is destroyed.
     private float m_CurrentHealth;                      // How much health the tank currently has.
     private bool m_Dead;                                // Has the tank been reduced beyond zero health yet?
+    private Color m_FullHealthGamma;
+    private Color m_ZeroHealthGamma;
 
+    public float CurrentHealth
+    {
+        get
+        {
+            return m_CurrentHealth;
+        }
+    }
 
     private void Awake()
     {
-        // Instantiate the explosion prefab and get a reference to the particle system on it.
-        m_ExplosionParticles = Instantiate(m_ExplosionPrefab).GetComponent<ParticleSystem>();
+        m_ZeroHealthGamma = new Color(m_ZeroHealthColor.r * m_ZeroHealthColor.r,
+            m_ZeroHealthColor.g * m_ZeroHealthColor.g,
+            m_ZeroHealthColor.b * m_ZeroHealthColor.b);
 
-        // Get a reference to the audio source on the instantiated prefab.
-        m_ExplosionAudio = m_ExplosionParticles.GetComponent<AudioSource>();
-
-        // Disable the prefab so it can be activated when it's required.
-        m_ExplosionParticles.gameObject.SetActive(false);
+        m_FullHealthGamma = new Color(m_FullHealthColor.r * m_FullHealthColor.r,
+            m_FullHealthColor.g * m_FullHealthColor.g,
+            m_FullHealthColor.b * m_FullHealthColor.b);
     }
-
 
     private void OnEnable()
     {
@@ -63,7 +71,8 @@ public class TankHealth : MonoBehaviour
         m_Slider.value = m_CurrentHealth;
 
         // Interpolate the color of the bar between the choosen colours based on the current percentage of the starting health.
-        m_FillImage.color = Color.Lerp(m_ZeroHealthColor, m_FullHealthColor, m_CurrentHealth / m_StartingHealth);
+        var colorGamma = Color.Lerp(m_ZeroHealthGamma, m_FullHealthGamma, m_CurrentHealth / m_StartingHealth);
+        m_FillImage.color = new Color((float)Math.Sqrt(colorGamma.r), (float)Math.Sqrt(colorGamma.g), (float)Math.Sqrt(colorGamma.b));
     }
 
 
@@ -72,9 +81,14 @@ public class TankHealth : MonoBehaviour
         // Set the flag so that this function is only called once.
         m_Dead = true;
 
+        //Instantiate the explosion prefab and get a reference to the particle system on it.
+        m_ExplosionParticles = Instantiate(m_ExplosionPrefab).GetComponent<ParticleSystem>();
+
+        //Get a reference to the audio source on the instantiated prefab.
+        m_ExplosionAudio = m_ExplosionParticles.GetComponent<AudioSource>();
+
         // Move the instantiated explosion prefab to the tank's position and turn it on.
         m_ExplosionParticles.transform.position = transform.position;
-        m_ExplosionParticles.gameObject.SetActive(true);
 
         // Play the particle system of the tank exploding.
         m_ExplosionParticles.Play();

@@ -4,17 +4,34 @@ using UnityEngine;
 
 public abstract class Command
 {
-    protected Vector3 m_Target;
-    public bool IsRunning = false;
+    private bool m_IsRunning = false;
 
-    protected Command(Vector3 target)
+    protected TankController m_Controller;
+    protected bool m_IsBlocking = false;
+
+    public bool IsRunning
     {
-        m_Target = target;
+        get
+        {
+            return m_IsRunning;
+        }
+    }
+    public bool IsBlocking
+    {
+        get
+        {
+            return m_IsBlocking;
+        }
+    }
+
+    protected Command(TankController controller)
+    {
+        m_Controller = controller;
     }
 
     public virtual void Execute()
     {
-        IsRunning = true;
+        m_IsRunning = true;
     }
     public virtual bool IsFinished()
     {
@@ -22,21 +39,44 @@ public abstract class Command
     }
 }
 
-public enum TankMoveStatus
+public abstract class GroundTargetedCommand : Command
+{
+    protected Vector3 m_Target;
+
+    protected GroundTargetedCommand(Vector3 target, TankController controller)
+        :base(controller)
+    {
+        m_Target = target;
+    }
+}
+
+public enum TankStatus
 {
     Normal,
     Tipped,
-    Turned
+    Turned,
+    Thrown
 }
 
 public class TankController : MonoBehaviour
 {
     private List<Command> m_CommandQueue = new List<Command>();
-    private TankMoveStatus m_Status = TankMoveStatus.Normal;
+    private TankStatus m_Status = TankStatus.Normal;
     private Rigidbody m_RigidBody;
     private NavMeshAgent m_Agent;
 
-    public TankMoveStatus Status
+    private Command CurrentCommand
+    {
+        get
+        {
+            if (m_CommandQueue.Count > 0)
+                return m_CommandQueue[0];
+            else
+                return null;
+        }
+    }
+
+    public TankStatus Status
     {
         get
         {
@@ -54,52 +94,74 @@ public class TankController : MonoBehaviour
     {
         var upVectorSimilarity = Vector3.Dot(transform.up, Vector3.up);
 
-        if (upVectorSimilarity < 1 && upVectorSimilarity > 0.5)
+        if(transform.position.y > 0.15)
         {
-            m_Status = TankMoveStatus.Tipped;
-            m_RigidBody.isKinematic = false;
-            m_Agent.enabled = false;
+            m_Status = TankStatus.Thrown;
+        }
+        else if (upVectorSimilarity <= 0.98 && upVectorSimilarity > 0.5)
+        {
+            m_Status = TankStatus.Tipped;
         }
         else if(upVectorSimilarity <= 0.5)
         {
-            m_Status = TankMoveStatus.Turned;
-            m_RigidBody.isKinematic = false;
-            m_Agent.enabled = false;
+            m_Status = TankStatus.Turned;
         }
         else
         {
-            m_Status = TankMoveStatus.Normal;
+            m_Status = TankStatus.Normal;
         }
 
-        if (Status != TankMoveStatus.Normal)
+        if (Status != TankStatus.Normal)
         {
-            m_CommandQueue.Clear();
+            if (CurrentCommand != null && !CurrentCommand.IsBlocking)
+                m_CommandQueue.Remove(CurrentCommand);
+            else if(CurrentCommand != null && CurrentCommand.IsRunning && CurrentCommand.IsFinished())
+                m_CommandQueue.Remove(CurrentCommand);
         }
-        else if (m_CommandQueue.Count > 0)
+        else if (CurrentCommand != null)
         { 
+            if (!CurrentCommand.IsRunning) // Execute the first command.
             {
-                if (!m_CommandQueue[0].IsRunning) // Execute the first command.
-                {
-                    m_CommandQueue[0].Execute();
-                }
-                else if (m_CommandQueue[0].IsFinished()) // Current command finished, switch to next.
-                {
-                    m_CommandQueue.RemoveAt(0);
-                }
+                CurrentCommand.Execute();
             }
-
+            else if (CurrentCommand.IsFinished()) // Current command finished, switch to next.
+            {
+                m_CommandQueue.Remove(CurrentCommand);
+            }
         }
-
     }
 
     public void Command(Command command)
     {
-        if (!Input.GetKey(KeyCode.LeftShift))
+        if (CurrentCommand == null || !CurrentCommand.IsBlocking)
         {
-            m_CommandQueue.Clear();
-        }
+            if (!Input.GetKey(KeyCode.LeftShift))
+            {
+                m_CommandQueue.Clear();
+            }
 
-        m_CommandQueue.Add(command);
+            m_CommandQueue.Add(command);
+        }
+    }
+
+    public void MakeDynamic()
+    {
+        if(m_Agent.enabled)
+        {
+            m_RigidBody.velocity = m_Agent.velocity;
+            m_Agent.enabled = false;
+            m_RigidBody.isKinematic = false;
+        }            
+    }
+
+    public void MakeKinematic()
+    {
+        if(!m_Agent.enabled)
+        {
+            m_Agent.velocity = m_RigidBody.velocity;
+            m_Agent.enabled = true;
+            m_RigidBody.isKinematic = true;
+        }
     }
 
 }
