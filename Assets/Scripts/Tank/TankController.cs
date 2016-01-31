@@ -1,69 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-
-
-public abstract class Command
-{
-    private bool m_IsRunning = false;
-
-    protected TankController m_Controller;
-    protected bool m_IsBlocking = false;
-
-    public bool IsRunning
-    {
-        get
-        {
-            return m_IsRunning;
-        }
-    }
-    public bool IsBlocking
-    {
-        get
-        {
-            return m_IsBlocking;
-        }
-    }
-
-    protected Command(TankController controller)
-    {
-        m_Controller = controller;
-    }
-
-    public virtual void Execute()
-    {
-        m_IsRunning = true;
-    }
-    public virtual bool IsFinished()
-    {
-        return true;
-    }
-}
-
-public abstract class GroundTargetedCommand : Command
-{
-    protected Vector3 m_Target;
-
-    protected GroundTargetedCommand(Vector3 target, TankController controller)
-        :base(controller)
-    {
-        m_Target = target;
-    }
-}
-
-public enum TankStatus
-{
-    Normal,
-    Tipped,
-    Turned,
-    Thrown
-}
 
 public class TankController : MonoBehaviour
 {
+    public GameObject m_MoveCommandArrows;
+
+    public AudioClip[] m_MoveVoiceClips;
+    public AudioClip[] m_ShootVoiceClips;
+
     private List<Command> m_CommandQueue = new List<Command>();
     private TankStatus m_Status = TankStatus.Normal;
     private Rigidbody m_RigidBody;
     private NavMeshAgent m_Agent;
+
+    public AudioSource m_VoiceAudio;
 
     private Command CurrentCommand
     {
@@ -90,28 +41,33 @@ public class TankController : MonoBehaviour
         m_Agent = GetComponent<NavMeshAgent>();
     }
 
-    private void FixedUpdate()
+    private TankStatus CheckStatus()
     {
         var upVectorSimilarity = Vector3.Dot(transform.up, Vector3.up);
 
-        if(transform.position.y > 0.15)
+        if (transform.position.y > 2)
         {
-            m_Status = TankStatus.Thrown;
+            return TankStatus.Thrown;
         }
         else if (upVectorSimilarity <= 0.98 && upVectorSimilarity > 0.5)
         {
-            m_Status = TankStatus.Tipped;
+            return TankStatus.Tipped;
         }
-        else if(upVectorSimilarity <= 0.5)
+        else if (upVectorSimilarity <= 0.5)
         {
-            m_Status = TankStatus.Turned;
+            return TankStatus.Turned;
         }
         else
         {
-            m_Status = TankStatus.Normal;
+            return TankStatus.Normal;
         }
+    }
 
-        if (Status != TankStatus.Normal)
+    private void FixedUpdate()
+    {
+        m_Status = CheckStatus();
+
+        if (m_Status != TankStatus.Normal)
         {
             if (CurrentCommand != null && !CurrentCommand.IsBlocking)
                 m_CommandQueue.Remove(CurrentCommand);
@@ -133,14 +89,44 @@ public class TankController : MonoBehaviour
 
     public void Command(Command command)
     {
-        if (CurrentCommand == null || !CurrentCommand.IsBlocking)
+        if(m_Status == TankStatus.Normal)
         {
-            if (!Input.GetKey(KeyCode.LeftShift))
+            if (CurrentCommand == null || !CurrentCommand.IsBlocking)
             {
-                m_CommandQueue.Clear();
-            }
+                if (!Input.GetKey(KeyCode.LeftShift))
+                {
+                    m_CommandQueue.Clear();
+                }
 
-            m_CommandQueue.Add(command);
+                m_CommandQueue.Add(command);
+
+                AudioClip[] voiceClips;
+
+                if (command is MoveCommand)
+                {
+                    voiceClips = m_MoveVoiceClips;
+                    var moveCommand = command as MoveCommand;
+                    var moveCommandInstance = Instantiate(m_MoveCommandArrows, moveCommand.Target, Quaternion.identity) as GameObject;
+
+                    Destroy(moveCommandInstance, 0.667f);
+                }
+                else if (command is ShootCommand)
+                    voiceClips = m_ShootVoiceClips;
+                else
+                    voiceClips = null;            
+                
+                PlayVoiceClip(voiceClips);
+            }
+        }
+    }
+
+    private void PlayVoiceClip(AudioClip[] voiceClips)
+    {
+        if (voiceClips != null && !m_VoiceAudio.isPlaying)
+        {
+            int selectedClip = (int)(Random.value * voiceClips.Length);
+            m_VoiceAudio.clip = voiceClips[selectedClip];
+            m_VoiceAudio.Play();
         }
     }
 

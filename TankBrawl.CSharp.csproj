@@ -13,11 +13,13 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile></CompilerResponseFile>
+    <CompilerResponseFile>
+    </CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows64:19</UnityBuildTarget>
     <UnityVersion>5.3.1f1</UnityVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -77,6 +79,12 @@
     <Compile Include="Assets\Complete\Scripts\Tank\TankShooting.cs" />
     <Compile Include="Assets\Complete\Scripts\UI\UIDirectionControl.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraControl.cs" />
+    <Compile Include="Assets\Scripts\Commands\Command.cs" />
+    <Compile Include="Assets\Scripts\Commands\ExplodeCommand.cs" />
+    <Compile Include="Assets\Scripts\Commands\GroundTargetedCommand.cs" />
+    <Compile Include="Assets\Scripts\Commands\MoveCommand.cs" />
+    <Compile Include="Assets\Scripts\Commands\ShootCommand.cs" />
+    <Compile Include="Assets\Scripts\Enum\TankStatus.cs" />
     <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
     <Compile Include="Assets\Scripts\Managers\TankManager.cs" />
     <Compile Include="Assets\Scripts\Shell\ShellExplosion.cs" />

@@ -19,7 +19,7 @@ public class ShellExplosion : MonoBehaviour
 
     private void FixedUpdate()
     {
-        m_RigidBody.AddForce(Physics.gravity * m_RigidBody.mass * -0.7f);
+        m_RigidBody.AddForce(Physics.gravity * m_RigidBody.mass * -0.95f);
     }
 
     private void OnTriggerEnter(Collider other)

@@ -17,11 +17,10 @@ public class CameraControl : MonoBehaviour
     }
 
 
-    private void FixedUpdate()
+    private void Update()
     {
         Move();
     }
-
 
     private void Move()
     {

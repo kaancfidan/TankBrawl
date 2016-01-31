@@ -1,36 +1,12 @@
-﻿using UnityEngine;
-
-public class MoveCommand : GroundTargetedCommand
-{
-    public MoveCommand(Vector3 target, TankController controller, NavMeshAgent agent)
-    : base(target, controller)
-    {
-        m_Agent = agent;
-    }
-
-    public override void Execute()
-    {
-        m_Controller.MakeKinematic();
-        m_Agent.destination = m_Target;
-
-        base.Execute();
-    }
-
-    public override bool IsFinished()
-    {
-        float distance = Vector3.Magnitude(m_Agent.transform.position - m_Target);
-        return (distance <= 0.15f);
-    }
-
-    private NavMeshAgent m_Agent;
-}
+﻿using System.Collections;
+using UnityEngine;
 
 public class TankMovement : MonoBehaviour
 {
     public int m_PlayerNumber = 1;         
-    public AudioSource m_MovementAudio;    
+    public AudioSource m_MovementAudio;
     public AudioClip m_EngineIdling;       
-    public AudioClip m_EngineDriving;      
+    public AudioClip m_EngineDriving;
     public float m_PitchRange = 0.2f;
 
     private float m_OriginalPitch;
@@ -40,6 +16,7 @@ public class TankMovement : MonoBehaviour
     private Rigidbody m_RigidBody;
 
     private TankController m_Controller;
+
 
     private void Awake()
     {
@@ -56,7 +33,14 @@ public class TankMovement : MonoBehaviour
 
     private void Update()
     {
+        Move();
+        TurnTurret();
         EngineAudio();
+    }
+
+    private void FixedUpdate()
+    {
+        ApplyTorque();
     }
 
     private void EngineAudio()
@@ -81,13 +65,6 @@ public class TankMovement : MonoBehaviour
         }
     }
 
-
-    private void FixedUpdate()
-    {
-        Move();
-        TurnTurret();
-    }
-
     private void TurnTurret()
     {
         if(m_Controller.Status == TankStatus.Normal)
@@ -98,6 +75,7 @@ public class TankMovement : MonoBehaviour
             if (hit.transform != null && hit.transform.name != name)
             {
                 var lookAtVector = hit.point - transform.position;
+                lookAtVector.y = 0; // do not let the turret look up.
 
                 var q = Quaternion.LookRotation(lookAtVector, Vector3.up);
                 m_Turret.rotation = q;
@@ -123,12 +101,30 @@ public class TankMovement : MonoBehaviour
 
             if(Input.GetMouseButton(1))
             {
-                m_RigidBody.AddTorque(turnAxis * 10);
+                m_RigidBody.AddTorque(turnAxis * 15);
             }
 
             if (Input.GetMouseButton(0))
             {
-                m_RigidBody.AddTorque(turnAxis * -10);
+                m_RigidBody.AddTorque(turnAxis * -15);
+            }
+        }
+    }
+
+    private void ApplyTorque()
+    {
+        if (m_Controller.Status == TankStatus.Turned)
+        {
+            if (Input.GetMouseButton(1))
+            {
+                var turnAxis = (System.Math.Abs(Vector3.Dot(transform.forward, Vector3.up)) < 0.2) ? transform.forward : transform.right;
+                m_RigidBody.AddTorque(turnAxis * 15);
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                var turnAxis = (System.Math.Abs(Vector3.Dot(transform.forward, Vector3.up)) < 0.2) ? transform.forward : transform.right;
+                m_RigidBody.AddTorque(turnAxis * -15);
             }
         }
     }
