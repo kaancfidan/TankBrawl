@@ -30,6 +30,9 @@ public class ShellExplosion : MonoBehaviour
         // Go through all the colliders...
         for (int i = 0; i < colliders.Length; i++)
         {
+            var tankController = colliders[i].GetComponent<TankController>();
+            tankController.MakeDynamic();
+
             // ... and find their rigidbody.
             Rigidbody targetRigidbody = colliders[i].GetComponent<Rigidbody>();
 

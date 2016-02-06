@@ -38,11 +38,6 @@ public class TankMovement : MonoBehaviour
         EngineAudio();
     }
 
-    private void FixedUpdate()
-    {
-        ApplyTorque();
-    }
-
     private void EngineAudio()
     {
         if (Vector3.Magnitude(m_Agent.velocity) < 0.1f)
@@ -67,65 +62,27 @@ public class TankMovement : MonoBehaviour
 
     private void TurnTurret()
     {
-        if(m_Controller.Status == TankStatus.Normal)
+        var hit = new RaycastHit();
+        Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+
+        if (hit.transform != null && hit.transform.name != name)
         {
-            var hit = new RaycastHit();
-            Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+            var lookAtVector = hit.point - transform.position;
+            lookAtVector.y = 0; // do not let the turret look up.
 
-            if (hit.transform != null && hit.transform.name != name)
-            {
-                var lookAtVector = hit.point - transform.position;
-                lookAtVector.y = 0; // do not let the turret look up.
-
-                var q = Quaternion.LookRotation(lookAtVector, Vector3.up);
-                m_Turret.rotation = q;
-            }
+            var q = Quaternion.LookRotation(lookAtVector, Vector3.up);
+            m_Turret.rotation = q;
         }
     }
 
     private void Move()
     {
-        if (m_Controller.Status == TankStatus.Normal)
+        if (Input.GetMouseButtonDown(1))
         {
-            if (Input.GetMouseButtonDown(1))
-            {
-                var hit = new RaycastHit();
-                Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
+            var hit = new RaycastHit();
+            Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
 
-                m_Controller.Command(new MoveCommand(hit.point, m_Controller, m_Agent));
-            }
-        }
-        else if(m_Controller.Status == TankStatus.Turned)
-        {
-            var turnAxis = (System.Math.Abs(Vector3.Dot(transform.forward, Vector3.up)) < 0.2) ? transform.forward : transform.right;
-
-            if(Input.GetMouseButton(1))
-            {
-                m_RigidBody.AddTorque(turnAxis * 15);
-            }
-
-            if (Input.GetMouseButton(0))
-            {
-                m_RigidBody.AddTorque(turnAxis * -15);
-            }
-        }
-    }
-
-    private void ApplyTorque()
-    {
-        if (m_Controller.Status == TankStatus.Turned)
-        {
-            if (Input.GetMouseButton(1))
-            {
-                var turnAxis = (System.Math.Abs(Vector3.Dot(transform.forward, Vector3.up)) < 0.2) ? transform.forward : transform.right;
-                m_RigidBody.AddTorque(turnAxis * 15);
-            }
-
-            if (Input.GetMouseButton(0))
-            {
-                var turnAxis = (System.Math.Abs(Vector3.Dot(transform.forward, Vector3.up)) < 0.2) ? transform.forward : transform.right;
-                m_RigidBody.AddTorque(turnAxis * -15);
-            }
+            m_Controller.Command(new MoveCommand(hit.point, m_Controller, m_Agent));
         }
     }
 }

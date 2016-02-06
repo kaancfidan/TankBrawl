@@ -31,10 +31,14 @@ public class ShootCommand : Command
     public override void Execute()
     {
         // Create an instance of the shell and store a reference to it's rigidbody.
-        Rigidbody shellInstance =
-            GameObject.Instantiate(m_Shell, m_FireTransform.position, m_FireTransform.rotation) as Rigidbody;
+        var shellInstance =
+            GameObject.Instantiate(m_Shell, m_FireTransform.position, m_FireTransform.rotation);
 
-        shellInstance.velocity = 15 * m_FireTransform.forward;
+        GameObject.Destroy(shellInstance, 5f);
+
+        var shellRigidBody = shellInstance as Rigidbody;
+
+        shellRigidBody.velocity = 15 * m_FireTransform.forward;
 
         m_Controller.MakeDynamic();
         m_RigidBody.AddForce(-m_FireTransform.forward * 200);

@@ -10,7 +10,6 @@ public class TankController : MonoBehaviour
     public AudioClip[] m_ShootVoiceClips;
 
     private List<Command> m_CommandQueue = new List<Command>();
-    private TankStatus m_Status = TankStatus.Normal;
     private Rigidbody m_RigidBody;
     private NavMeshAgent m_Agent;
 
@@ -27,54 +26,15 @@ public class TankController : MonoBehaviour
         }
     }
 
-    public TankStatus Status
-    {
-        get
-        {
-            return m_Status;
-        }
-    }
-
     private void Awake()
     {
         m_RigidBody = GetComponent<Rigidbody>();
         m_Agent = GetComponent<NavMeshAgent>();
     }
 
-    private TankStatus CheckStatus()
-    {
-        var upVectorSimilarity = Vector3.Dot(transform.up, Vector3.up);
-
-        if (transform.position.y > 2)
-        {
-            return TankStatus.Thrown;
-        }
-        else if (upVectorSimilarity <= 0.98 && upVectorSimilarity > 0.5)
-        {
-            return TankStatus.Tipped;
-        }
-        else if (upVectorSimilarity <= 0.5)
-        {
-            return TankStatus.Turned;
-        }
-        else
-        {
-            return TankStatus.Normal;
-        }
-    }
-
     private void FixedUpdate()
     {
-        m_Status = CheckStatus();
-
-        if (m_Status != TankStatus.Normal)
-        {
-            if (CurrentCommand != null && !CurrentCommand.IsBlocking)
-                m_CommandQueue.Remove(CurrentCommand);
-            else if(CurrentCommand != null && CurrentCommand.IsRunning && CurrentCommand.IsFinished())
-                m_CommandQueue.Remove(CurrentCommand);
-        }
-        else if (CurrentCommand != null)
+        if (CurrentCommand != null)
         { 
             if (!CurrentCommand.IsRunning) // Execute the first command.
             {
@@ -89,34 +49,31 @@ public class TankController : MonoBehaviour
 
     public void Command(Command command)
     {
-        if(m_Status == TankStatus.Normal)
+        if (CurrentCommand == null || !CurrentCommand.IsBlocking)
         {
-            if (CurrentCommand == null || !CurrentCommand.IsBlocking)
+            if (!Input.GetKey(KeyCode.LeftShift))
             {
-                if (!Input.GetKey(KeyCode.LeftShift))
-                {
-                    m_CommandQueue.Clear();
-                }
-
-                m_CommandQueue.Add(command);
-
-                AudioClip[] voiceClips;
-
-                if (command is MoveCommand)
-                {
-                    voiceClips = m_MoveVoiceClips;
-                    var moveCommand = command as MoveCommand;
-                    var moveCommandInstance = Instantiate(m_MoveCommandArrows, moveCommand.Target, Quaternion.identity) as GameObject;
-
-                    Destroy(moveCommandInstance, 0.667f);
-                }
-                else if (command is ShootCommand)
-                    voiceClips = m_ShootVoiceClips;
-                else
-                    voiceClips = null;            
-                
-                PlayVoiceClip(voiceClips);
+                m_CommandQueue.Clear();
             }
+
+            m_CommandQueue.Add(command);
+
+            AudioClip[] voiceClips;
+
+            if (command is MoveCommand)
+            {
+                voiceClips = m_MoveVoiceClips;
+                var moveCommand = command as MoveCommand;
+                var moveCommandInstance = Instantiate(m_MoveCommandArrows, moveCommand.Target, Quaternion.identity) as GameObject;
+
+                Destroy(moveCommandInstance, 0.667f);
+            }
+            else if (command is ShootCommand)
+                voiceClips = m_ShootVoiceClips;
+            else
+                voiceClips = null;            
+                
+            PlayVoiceClip(voiceClips);
         }
     }
 
@@ -134,7 +91,6 @@ public class TankController : MonoBehaviour
     {
         if(m_Agent.enabled)
         {
-            m_RigidBody.velocity = m_Agent.velocity;
             m_Agent.enabled = false;
             m_RigidBody.isKinematic = false;
         }            
@@ -144,8 +100,8 @@ public class TankController : MonoBehaviour
     {
         if(!m_Agent.enabled)
         {
-            m_Agent.velocity = m_RigidBody.velocity;
             m_Agent.enabled = true;
+            m_Agent.velocity = m_RigidBody.velocity;
             m_RigidBody.isKinematic = true;
         }
     }
