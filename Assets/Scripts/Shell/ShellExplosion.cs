@@ -5,10 +5,11 @@ public class ShellExplosion : MonoBehaviour
     public LayerMask m_TankMask;                        // Used to filter what the explosion affects, this should be set to "Players".
     public ParticleSystem m_ExplosionParticles;         // Reference to the particles that will play on explosion.
     public AudioSource m_ExplosionAudio;                // Reference to the audio that will play on explosion.
-    public float m_MaxDamage = 100f;                    // The amount of damage done if the explosion is centred on a tank.
-    public float m_ExplosionForce = 1000f;              // The amount of force added to a tank at the centre of the explosion.
+    public float m_MaxDamage = 15f;                    // The amount of damage done if the explosion is centred on a tank.
+    public float m_ExplosionForce = 800f;              // The amount of force added to a tank at the centre of the explosion.
     public float m_ExplosionRadius = 5f;                // The maximum distance away from the explosion tanks can be and are still affected.
 
+    [HideInInspector] public TankController m_SourceTankController;
     private Rigidbody m_RigidBody;
 
 
@@ -19,7 +20,7 @@ public class ShellExplosion : MonoBehaviour
 
     private void FixedUpdate()
     {
-        m_RigidBody.AddForce(Physics.gravity * m_RigidBody.mass * -0.95f);
+        m_RigidBody.AddForce(Physics.gravity * m_RigidBody.mass * -0.92f);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -31,6 +32,10 @@ public class ShellExplosion : MonoBehaviour
         for (int i = 0; i < colliders.Length; i++)
         {
             var tankController = colliders[i].GetComponent<TankController>();
+
+            if (tankController == m_SourceTankController) // Tanks don't damage themselves
+                continue;
+
             tankController.MakeDynamic();
 
             // ... and find their rigidbody.

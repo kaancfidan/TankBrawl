@@ -64,7 +64,7 @@ public class TankController : MonoBehaviour
             {
                 voiceClips = m_MoveVoiceClips;
                 var moveCommand = command as MoveCommand;
-                var moveCommandInstance = Instantiate(m_MoveCommandArrows, moveCommand.Target, Quaternion.identity) as GameObject;
+                var moveCommandInstance = Instantiate(m_MoveCommandArrows, moveCommand.Target + new Vector3(0.5f, 0, -1f), Quaternion.identity) as GameObject;
 
                 Destroy(moveCommandInstance, 0.667f);
             }

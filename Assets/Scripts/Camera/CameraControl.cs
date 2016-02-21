@@ -1,14 +1,12 @@
 ﻿using UnityEngine;
 
 public class CameraControl : MonoBehaviour
-{
-    public float m_DampTime = 1f;                 
-    public float m_ScreenEdgeBuffer = 4f;           
-    public float m_MinSize = 6.5f;
-    public Transform m_Target; 
+{                     
+    public Transform m_Target;
+    public float m_LerpGain = 0.5f;
                      
-    private Vector3 m_MoveVelocity;
-    private Vector3 m_DesiredPosition;                       
+    private Vector3 m_DesiredPosition;
+                         
 
 
     private void Awake()
@@ -32,6 +30,6 @@ public class CameraControl : MonoBehaviour
         else
             m_DesiredPosition = m_Target.position;
 
-        transform.position = Vector3.SmoothDamp(transform.position, m_DesiredPosition, ref m_MoveVelocity, m_DampTime);
+        transform.position = Vector3.Lerp(transform.position, m_DesiredPosition, m_LerpGain * Time.deltaTime);
     }
 }

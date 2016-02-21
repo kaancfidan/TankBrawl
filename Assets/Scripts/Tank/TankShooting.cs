@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class TankShooting : MonoBehaviour
 {    
-    public Rigidbody m_Shell;            
+    public GameObject m_ShellPrefab;            
     public Transform m_FireTransform;         
     public AudioSource m_ShootingAudio;  
     public AudioClip m_FireClip;
@@ -26,7 +26,7 @@ public class TankShooting : MonoBehaviour
     {
         if(Input.GetMouseButtonDown(0))
         {
-            m_Controller.Command(new ShootCommand(m_Controller, m_RigidBody, m_Shell, m_FireTransform, m_ShootingAudio, m_FireClip));
+            m_Controller.Command(new ShootCommand(m_Controller, m_RigidBody, m_ShellPrefab, m_FireTransform, m_ShootingAudio, m_FireClip));
         }
         
         if(Input.GetKeyDown(KeyCode.R))

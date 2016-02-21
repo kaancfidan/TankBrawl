@@ -10,13 +10,15 @@ public class TankHealth : MonoBehaviour
     public Color m_FullHealthColor = Color.green;       // The color the health bar will be when on full health.
     public Color m_ZeroHealthColor = Color.red;         // The color the health bar will be when on no health.
     public GameObject m_ExplosionPrefab;                // A prefab that will be instantiated in Awake, then used whenever the tank dies.
-
+    public float m_MinimumMassPercentage = 0.4f;
 
     private AudioSource m_ExplosionAudio;               // The audio source to play when the tank explodes.
     private float m_CurrentHealth;                      // How much health the tank currently has.
     private bool m_Dead;                                // Has the tank been reduced beyond zero health yet?
     private Color m_FullHealthGamma;
     private Color m_ZeroHealthGamma;
+    private Rigidbody m_RigidBody;
+    private float m_StartingMass;
 
     public float CurrentHealth
     {
@@ -35,6 +37,9 @@ public class TankHealth : MonoBehaviour
         m_FullHealthGamma = new Color(m_FullHealthColor.r * m_FullHealthColor.r,
             m_FullHealthColor.g * m_FullHealthColor.g,
             m_FullHealthColor.b * m_FullHealthColor.b);
+
+        m_RigidBody = GetComponent<Rigidbody>();
+        m_StartingMass = m_RigidBody.mass;
     }
 
     private void OnEnable()
@@ -52,6 +57,8 @@ public class TankHealth : MonoBehaviour
     {
         // Reduce current health by the amount of damage done.
         m_CurrentHealth -= amount;
+        float massPercentage = m_MinimumMassPercentage + (m_CurrentHealth / m_StartingHealth) * (1-m_MinimumMassPercentage);
+        m_RigidBody.mass = massPercentage * m_StartingMass;
 
         // Change the UI elements appropriately.
         SetHealthUI();
